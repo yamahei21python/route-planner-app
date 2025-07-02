@@ -102,8 +102,7 @@ if submitted:
                     with st.expander("▼ ルート詳細を表示"):
                         total_distance = 0
                         total_duration_sec = 0
-                        full_route_locations = [start_point] + optimized_destinations + [start_point]
-
+                        
                         for i, leg in enumerate(directions_result[0]['legs']):
                             st.markdown(f"---")
                             st.markdown(f"**区間 {i+1}**")
@@ -121,14 +120,40 @@ if submitted:
                         st.markdown(f"- **総所要時間:** 約{total_duration_min // 60}時間 {total_duration_min % 60}分")
 
 
-                    # --- 地図URLの生成 ---
-                    base_url = "https://www.google.com/maps/dir/"
-                    # URLエンコードをかけて安全なURLにする
-                    encoded_locations = [urllib.parse.quote(loc) for loc in full_route_locations]
-                    map_url = base_url + "/".join(encoded_locations)
-
+                    # --- 地図で確認 ---
                     st.subheader("▼ 地図で確認")
-                    st.link_button("Google Mapsで経路を開く", map_url)
+                    
+                    try:
+                        api_key = st.secrets["Maps_api_key"]
+                        
+                        # (1) 埋め込み地図 (iframe) 用のURL
+                        origin_encoded = urllib.parse.quote(start_point)
+                        waypoints_encoded = "|".join([urllib.parse.quote(dest) for dest in optimized_destinations])
+                        embed_url = (
+                            f"https://www.google.com/maps/embed/v1/directions"
+                            f"?key={api_key}"
+                            f"&origin={origin_encoded}"
+                            f"&destination={origin_encoded}"
+                            f"&waypoints={waypoints_encoded}"
+                        )
+                        st.components.v1.iframe(embed_url, height=600, scrolling=True)
+
+                        # ===============================================================
+                        # ▼▼▼【追加箇所】外部タブで開くボタン ▼▼▼
+                        # ===============================================================
+                        
+                        # (2) 外部タブで開く標準的なGoogle Maps URL
+                        full_route_locations = [start_point] + optimized_destinations + [start_point]
+                        encoded_locations = [urllib.parse.quote(loc) for loc in full_route_locations]
+                        standard_map_url = "https://www.google.com/maps/dir/" + "/".join(encoded_locations)
+                        
+                        # ボタンを少し下に配置するためにスペーサーを挿入
+                        st.write("") 
+                        st.link_button("🗺️ 新しいタブで地図を開く", url=standard_map_url, use_container_width=True)
+
+
+                    except Exception as e:
+                        st.error(f"地図の表示に失敗しました。API設定などを確認してください。エラー: {e}")
 
             except googlemaps.exceptions.ApiError as e:
                 st.error(f"Google Maps APIエラーが発生しました: {e}")
