@@ -153,8 +153,16 @@ with col1:
         zoom_level = 12
 
     # Foliumで地図を作成
-    m = folium.Map(location=map_center, zoom_start=zoom_level)
-
+    #m = folium.Map(location=map_center, zoom_start=zoom_level)
+    
+    # Foliumで地図を作成 (タイルをGoogleマップに変更)
+    m = folium.Map(
+        location=map_center,
+        zoom_start=zoom_level,
+        tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        attr='Google'
+    )
+    
     # 各地点にマーカー（ピン）を立てる
     for loc in valid_locations:
         folium.Marker(
