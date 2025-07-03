@@ -12,7 +12,7 @@ from github.GithubException import GithubException
 
 # --- ページ設定 ---
 st.set_page_config(
-    page_title="最適経路提案アプリ",
+    page_title="最適経路検索アプリ",
     page_icon="🗺️",
     layout="wide"
 )
