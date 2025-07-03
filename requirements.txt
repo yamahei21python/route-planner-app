@@ -1,6 +1,9 @@
 streamlit
-googlemaps
-qrcode
-pytz
 pandas
+googlemaps
+pytz
+folium
+streamlit-folium
+qrcode
+Pillow
 PyGithub
