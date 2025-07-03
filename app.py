@@ -22,38 +22,53 @@ except Exception as e:
 if 'destinations' not in st.session_state:
     st.session_state.destinations = ['']
 
-# --- UIコンポーネント ---
-st.title("🗺️ 最適経路提案アプリ")
-st.write("出発地と複数の目的地を入力すると、最も効率的な巡回ルートを計算します。")
+# ===============================================================
+# ▼▼▼【修正箇所】入力フォームをサイドバーに移動 ▼▼▼
+# ===============================================================
 
-# --- 入力フォーム ---
-with st.form("route_form"):
-    start_point = st.text_input("**出発地 兼 帰着地**", placeholder="例：東京駅")
-    st.subheader("**目的地**")
+with st.sidebar:
+    st.title("🗺️ ルート設定")
+    
+    # --- 入力フォーム ---
+    with st.form("route_form"):
+        start_point = st.text_input("**出発地 兼 帰着地**", placeholder="例：東京駅")
+        
+        st.subheader("**目的地**")
+        # 動的に目的地入力欄を表示
+        for i in range(len(st.session_state.destinations)):
+            st.session_state.destinations[i] = st.text_input(
+                f"目的地 {i+1}",
+                value=st.session_state.destinations[i],
+                key=f"dest_{i}",
+                label_visibility="collapsed" # ラベルを非表示にしてスッキリさせる
+            )
 
-    for i in range(len(st.session_state.destinations)):
-        st.session_state.destinations[i] = st.text_input(
-            f"目的地 {i+1}",
-            value=st.session_state.destinations[i],
-            key=f"dest_{i}"
-        )
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.form_submit_button("＋ 目的地を追加"):
-            st.session_state.destinations.append('')
-            st.rerun()
-    with col2:
-        if st.form_submit_button("－ 最後の目的地を削除"):
-            if len(st.session_state.destinations) > 1:
-                st.session_state.destinations.pop()
+        # 入力欄の操作ボタン
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.form_submit_button("＋ 目的地を追加", use_container_width=True):
+                st.session_state.destinations.append('')
                 st.rerun()
-    with col3:
-        if st.form_submit_button("クリア"):
+        with col2:
+            if st.form_submit_button("－ 最後の目的地を削除", use_container_width=True):
+                if len(st.session_state.destinations) > 1:
+                    st.session_state.destinations.pop()
+                    st.rerun()
+        
+        if st.form_submit_button("クリア", use_container_width=True):
             st.session_state.destinations = ['']
             st.rerun()
 
-    submitted = st.form_submit_button("最適経路を検索", type="primary")
+        st.write("---")
+        # 検索実行ボタン
+        submitted = st.form_submit_button("最適経路を検索", type="primary", use_container_width=True)
+
+
+# --- メイン画面の表示 ---
+st.title("最適経路提案アプリ")
+
+if not submitted:
+    st.info("サイドバーから出発地と目的地を入力し、「最適経路を検索」ボタンを押してください。")
 
 # --- 検索処理と結果表示 ---
 if submitted:
@@ -73,9 +88,6 @@ if submitted:
                 if not directions_result:
                     st.error("経路が見つかりませんでした。住所を確認してください。")
                 else:
-                    # 【修正点①】完了メッセージを削除
-                    # st.success("✅ 最適経路の計算が完了しました！")
-
                     optimized_order = directions_result[0]['waypoint_order']
                     optimized_destinations = [destinations_input[i] for i in optimized_order]
 
@@ -104,11 +116,10 @@ if submitted:
                         
                         with col2:
                             with st.popover("📱 QRコードを表示", use_container_width=True):
-                                # 【修正点②】QRコードのサイズを小さくする
                                 qr = qrcode.QRCode(
                                     version=1,
                                     error_correction=qrcode.constants.ERROR_CORRECT_L,
-                                    box_size=4,  # サイズを調整 (数値を小さくする)
+                                    box_size=4,
                                     border=4,
                                 )
                                 qr.add_data(standard_map_url)
