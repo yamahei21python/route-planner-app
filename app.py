@@ -11,10 +11,11 @@ st.set_page_config(
 )
 
 # --- Google Maps APIクライアントの初期化 ---
+# 【変更点】1つのAPIキー'Maps_api_key'を読み込む
 try:
-    gmaps = googlemaps.Client(key=st.secrets["backend_api_key"])
+    gmaps = googlemaps.Client(key=st.secrets["Maps_api_key"])
 except Exception as e:
-    st.error(f"バックエンド用のAPIキー(backend_api_key)が設定されていません。エラー: {e}")
+    st.error(f"APIキー(Maps_api_key)が設定されていません。エラー: {e}")
     st.stop()
 
 
@@ -107,10 +108,9 @@ if submitted:
                     st.subheader("▼ 地図で確認")
                     
                     try:
-                        # ▼▼▼【レイアウト修正箇所】表示順を入れ替え ▼▼▼
-                        
                         # (1) URLを両方とも準備する
-                        api_key = st.secrets["embed_api_key"]
+                        # 【変更点】1つのAPIキー'Maps_api_key'を読み込む
+                        api_key = st.secrets["Maps_api_key"]
                         origin_encoded = urllib.parse.quote(start_point)
                         waypoints_encoded = "|".join([urllib.parse.quote(dest) for dest in optimized_destinations])
                         embed_url = (
@@ -126,10 +126,7 @@ if submitted:
                         standard_map_url = "https://www.google.com/maps/dir/" + "/".join(encoded_locations)
                         
                         # (2) 指定された順番で表示する
-                        # 先に「新しいタブで開く」ボタンを表示
                         st.link_button("🗺️ 新しいタブで地図を開く", url=standard_map_url, use_container_width=True)
-                        
-                        # スペーサーを挟んでから、埋め込み地図を表示
                         st.write("") 
                         st.components.v1.iframe(embed_url, height=600, scrolling=True)
 
