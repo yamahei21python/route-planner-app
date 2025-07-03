@@ -204,7 +204,7 @@ with st.sidebar:
         st.rerun()
 
 # --- メイン画面の表示 ---
-st.title("最適経路提案アプリ")
+st.title("最適経路検索アプリ")
 
 if not submitted:
     st.info("サイドバーから出発地と目的地を入力し、「最適経路を検索」ボタンを押してください。")
