@@ -44,7 +44,6 @@ with st.sidebar:
     for i in range(len(st.session_state.destinations)):
         col1, col2 = st.columns([0.8, 0.2])
         with col1:
-            # 【修正】ここの構文エラーを修正
             st.session_state.destinations[i] = st.text_input(
                 f"目的地 {i+1}",
                 value=st.session_state.destinations[i],
@@ -95,7 +94,6 @@ if submitted:
                 if not directions_result:
                     st.error("経路が見つかりませんでした。住所を確認してください。")
                 else:
-                    # 【修正】ここの構文エラーを修正
                     optimized_order = directions_result[0]['waypoint_order']
                     optimized_destinations = [destinations_input[i] for i in optimized_order]
 
@@ -145,17 +143,22 @@ if submitted:
                     except Exception as e:
                         st.error(f"地図の表示に失敗しました。APIキーの設定などを確認してください。エラー: {e}")
 
+                    # --- テキストでの結果表示 ---
                     st.subheader("▼ 最適な訪問順序")
+
+                    # ▼▼▼【レイアウト修正箇所】▼▼▼
                     route_text = f"**出発地:** {start_point}\n"
                     for i, dest in enumerate(optimized_destinations):
-                        route_text += f"1. **{i+1}番目の訪問先:** {dest}\n"
+                        # 番号の不具合と改行を修正
+                        route_text += f"**{i+1}番目の訪問先:** {dest}\n"
+                    # 帰着地を改行して表示
                     route_text += f"**帰着地:** {end_point}"
                     st.markdown(route_text)
+                    # ▲▲▲【レイアウト修正箇所】▲▲▲
 
                     with st.expander("▼ ルート詳細を表示"):
                         total_distance = 0
                         total_duration_sec = 0
-                        # 【修正】ここの構文エラーを修正
                         for i, leg in enumerate(directions_result[0]['legs']):
                             st.markdown(f"---")
                             st.markdown(f"**区間 {i+1}**")
