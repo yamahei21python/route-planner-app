@@ -28,17 +28,16 @@ if 'end_point' not in st.session_state:
 # ▼▼▼ サイドバーの入力フォーム ▼▼▼
 # ===============================================================
 with st.sidebar:
-    # ▼▼▼【レイアウト修正CSS】▼▼▼
-    # ボタンをテキスト入力欄の中央に配置するためのCSSを適用
+    # ▼▼▼【レイアウト最終修正CSS】▼▼▼
+    # 削除ボタンを強制的に下にずらして中央揃えにするためのCSS
     st.markdown("""
     <style>
-        /* Streamlitの列コンテナ内の要素を垂直方向中央に配置 */
-        [data-testid="stHorizontalBlock"] {
-            align-items: center;
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-of-type(2) > div {
+            margin-top: 28px;
         }
     </style>
     """, unsafe_allow_html=True)
-    # ▲▲▲【レイアウト修正CSS】▲▲▲
+    # ▲▲▲【レイアウト最終修正CSS】▲▲▲
 
     st.title("🗺️ ルート設定")
 
@@ -71,10 +70,10 @@ with st.sidebar:
                 placeholder="例：大阪駅" if i == 0 else ""
             )
         with col2:
-            # ボタンのレイアウトを調整
             if st.button("✖️", key=f"del_{i}"):
                 st.session_state.destinations.pop(i)
                 st.rerun()
+
 
     if st.button("＋ 目的地を追加", use_container_width=True):
         st.session_state.destinations.append('')
