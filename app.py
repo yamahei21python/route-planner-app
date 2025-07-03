@@ -33,14 +33,16 @@ with st.sidebar:
     # --- 出発地・帰着地 ---
     start_point = st.text_input("**出発地**", placeholder="例：東京駅")
 
-    same_as_start = st.checkbox("出発地と帰着地を同じにする", value=True)
+    # 【修正②】チェックボックスの文言を変更
+    same_as_start = st.checkbox("出発地と帰着地は同じ", value=True)
     if same_as_start:
         end_point = start_point
     else:
         end_point = st.text_input("**帰着地**", key='end_point', placeholder="例：新宿駅")
 
     # --- 目的地 ---
-    st.subheader("**目的地**")
+    # 【修正①】フォントスタイルを太字のテキストに変更
+    st.markdown("**目的地**")
     for i in range(len(st.session_state.destinations)):
         col1, col2 = st.columns([0.8, 0.2])
         with col1:
@@ -145,9 +147,7 @@ if submitted:
 
                     # --- テキストでの結果表示 ---
                     st.subheader("▼ 最適な訪問順序")
-
-                    # ▼▼▼【レイアウト修正箇所】▼▼▼
-                    # 指定されたフォーマットでテキストを生成
+                    
                     route_text_lines = []
                     route_text_lines.append(f"出 発 地: {start_point}")
                     for i, dest in enumerate(optimized_destinations):
@@ -156,9 +156,7 @@ if submitted:
                     
                     final_route_text = "\n".join(route_text_lines)
                     
-                    # st.text()を使い、等幅フォントで表示してレイアウトを維持
                     st.text(final_route_text)
-                    # ▲▲▲【レイアウト修正箇所】▲▲▲
 
                     with st.expander("▼ ルート詳細を表示"):
                         total_distance = 0
