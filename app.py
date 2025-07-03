@@ -169,7 +169,7 @@ with col1:
             location=loc['coords'],
             popup=loc['address'],
             tooltip=loc['address'],
-            icon=folium.Icon(color="blue", icon="info-sign")
+            icon=folium.Icon(color="red", icon="info-sign")
         ).add_to(m)
 
     # 検索ボタンが押され、経路が見つかった場合の処理
