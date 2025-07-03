@@ -147,13 +147,17 @@ if submitted:
                     st.subheader("▼ 最適な訪問順序")
 
                     # ▼▼▼【レイアウト修正箇所】▼▼▼
-                    route_text = f"**出発地:** {start_point}\n"
+                    # 指定されたフォーマットでテキストを生成
+                    route_text_lines = []
+                    route_text_lines.append(f"出 発 地: {start_point}")
                     for i, dest in enumerate(optimized_destinations):
-                        # 番号の不具合と改行を修正
-                        route_text += f"**{i+1}番目の訪問先:** {dest}\n"
-                    # 帰着地を改行して表示
-                    route_text += f"**帰着地:** {end_point}"
-                    st.markdown(route_text)
+                        route_text_lines.append(f"訪 問 先{i+1}: {dest}")
+                    route_text_lines.append(f"帰 着 地: {end_point}")
+                    
+                    final_route_text = "\n".join(route_text_lines)
+                    
+                    # st.text()を使い、等幅フォントで表示してレイアウトを維持
+                    st.text(final_route_text)
                     # ▲▲▲【レイアウト修正箇所】▲▲▲
 
                     with st.expander("▼ ルート詳細を表示"):
