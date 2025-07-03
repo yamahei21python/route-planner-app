@@ -1,7 +1,8 @@
 import streamlit as st
 import googlemaps
-from math import dist
-import urllib.parse # URLエンコード用
+import urllib.parse
+import qrcode
+import io
 
 # --- ページ設定 ---
 st.set_page_config(
@@ -11,13 +12,11 @@ st.set_page_config(
 )
 
 # --- Google Maps APIクライアントの初期化 ---
-# 【変更点】1つのAPIキー'Maps_api_key'を読み込む
 try:
     gmaps = googlemaps.Client(key=st.secrets["Maps_api_key"])
 except Exception as e:
     st.error(f"APIキー(Maps_api_key)が設定されていません。エラー: {e}")
     st.stop()
-
 
 # --- Session Stateの初期化 ---
 if 'destinations' not in st.session_state:
@@ -74,19 +73,63 @@ if submitted:
                 if not directions_result:
                     st.error("経路が見つかりませんでした。住所を確認してください。")
                 else:
+                    st.success("✅ 最適経路の計算が完了しました！")
+
                     optimized_order = directions_result[0]['waypoint_order']
                     optimized_destinations = [destinations_input[i] for i in optimized_order]
 
-                    st.success("✅ 最適経路の計算が完了しました！")
+                    # --- 地図表示と各種ボタン ---
+                    st.subheader("▼ 地図で確認")
+                    
+                    try:
+                        # (1) URLを両方とも準備する
+                        api_key = st.secrets["Maps_api_key"]
+                        origin_encoded = urllib.parse.quote(start_point)
+                        waypoints_encoded = "|".join([urllib.parse.quote(dest) for dest in optimized_destinations])
+                        embed_url = (
+                            f"https://www.google.com/maps/embed/v1/directions"
+                            f"?key={api_key}"
+                            f"&origin={origin_encoded}"
+                            f"&destination={origin_encoded}"
+                            f"&waypoints={waypoints_encoded}"
+                        )
+                        
+                        full_route_locations = [start_point] + optimized_destinations + [start_point]
+                        encoded_locations = [urllib.parse.quote(loc) for loc in full_route_locations]
+                        standard_map_url = "https://www.google.com/maps/dir/" + "/".join(encoded_locations)
+                        
+                        # (2) ボタンを2列で横に並べて表示
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.link_button("🗺️ 新しいタブで地図を開く", url=standard_map_url, use_container_width=True)
+                        
+                        with col2:
+                            with st.popover("📱 QRコードを表示", use_container_width=True):
+                                # QRコードの生成
+                                qr_img = qrcode.make(standard_map_url)
+                                # メモリ上で画像を扱うためにBytesIOを使用
+                                buf = io.BytesIO()
+                                qr_img.save(buf)
+                                buf.seek(0)
+                                st.image(buf, caption="Google Maps URL")
+
+                        # (3) 埋め込み地図を表示
+                        st.write("") 
+                        st.components.v1.iframe(embed_url, height=500, scrolling=True)
+
+                    except Exception as e:
+                        st.error(f"地図の表示に失敗しました。APIキーの設定などを確認してください。エラー: {e}")
+                    
+                    # --- テキストでの結果表示 ---
+                    # 【レイアウト変更】地図の下に訪問順序を表示
                     st.subheader("▼ 最適な訪問順序")
-                    # 最適化された結果のテキスト表示
                     route_text = f"**出発地:** {start_point}\n"
                     for i, dest in enumerate(optimized_destinations):
                         route_text += f"1. **{i+1}番目の訪問先:** {dest}\n"
                     route_text += f"**帰着地:** {start_point}"
                     st.markdown(route_text)
 
-
+                    # 詳細ルートはExpander内に表示
                     with st.expander("▼ ルート詳細を表示"):
                         total_distance = 0
                         total_duration_sec = 0
@@ -104,34 +147,6 @@ if submitted:
                         total_duration_min = total_duration_sec // 60
                         st.markdown(f"- **総移動距離:** {total_distance / 1000:.1f} km")
                         st.markdown(f"- **総所要時間:** 約{total_duration_min // 60}時間 {total_duration_min % 60}分")
-
-                    st.subheader("▼ 地図で確認")
-                    
-                    try:
-                        # (1) URLを両方とも準備する
-                        # 【変更点】1つのAPIキー'Maps_api_key'を読み込む
-                        api_key = st.secrets["Maps_api_key"]
-                        origin_encoded = urllib.parse.quote(start_point)
-                        waypoints_encoded = "|".join([urllib.parse.quote(dest) for dest in optimized_destinations])
-                        embed_url = (
-                            f"https://www.google.com/maps/embed/v1/directions"
-                            f"?key={api_key}"
-                            f"&origin={origin_encoded}"
-                            f"&destination={origin_encoded}"
-                            f"&waypoints={waypoints_encoded}"
-                        )
-                        
-                        full_route_locations = [start_point] + optimized_destinations + [start_point]
-                        encoded_locations = [urllib.parse.quote(loc) for loc in full_route_locations]
-                        standard_map_url = "https://www.google.com/maps/dir/" + "/".join(encoded_locations)
-                        
-                        # (2) 指定された順番で表示する
-                        st.link_button("🗺️ 新しいタブで地図を開く", url=standard_map_url, use_container_width=True)
-                        st.write("") 
-                        st.components.v1.iframe(embed_url, height=600, scrolling=True)
-
-                    except Exception as e:
-                        st.error(f"地図の表示に失敗しました。APIキーの設定などを確認してください。エラー: {e}")
 
             except googlemaps.exceptions.ApiError as e:
                 st.error(f"Google Maps APIエラーが発生しました: {e}")
