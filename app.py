@@ -23,44 +23,49 @@ if 'destinations' not in st.session_state:
     st.session_state.destinations = ['']
 
 # ===============================================================
-# ▼▼▼【修正箇所】入力フォームをサイドバーに移動 ▼▼▼
+# ▼▼▼ サイドバーの入力フォーム ▼▼▼
 # ===============================================================
-
 with st.sidebar:
     st.title("🗺️ ルート設定")
-    
-    # --- 入力フォーム ---
-    with st.form("route_form"):
-        start_point = st.text_input("**出発地 兼 帰着地**", placeholder="例：東京駅")
-        
-        st.subheader("**目的地**")
-        # 動的に目的地入力欄を表示
-        for i in range(len(st.session_state.destinations)):
+
+    # --- 出発地 ---
+    start_point = st.text_input("**出発地 兼 帰着地**", placeholder="例：東京駅")
+
+    # --- 目的地 ---
+    st.subheader("**目的地**")
+
+    # 各目的地入力欄と削除ボタンを動的に生成
+    for i in range(len(st.session_state.destinations)):
+        col1, col2 = st.columns([0.9, 0.1]) # 入力欄とボタンの幅を調整
+        with col1:
             st.session_state.destinations[i] = st.text_input(
                 f"目的地 {i+1}",
                 value=st.session_state.destinations[i],
                 key=f"dest_{i}",
-                label_visibility="collapsed" # ラベルを非表示にしてスッキリさせる
+                label_visibility="collapsed"
             )
-
-        # 入力欄の操作ボタン
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.form_submit_button("＋ 目的地を追加", use_container_width=True):
-                st.session_state.destinations.append('')
-                st.rerun()
         with col2:
-            if st.form_submit_button("－ 最後の目的地を削除", use_container_width=True):
-                if len(st.session_state.destinations) > 1:
-                    st.session_state.destinations.pop()
-                    st.rerun()
-        
-        if st.form_submit_button("クリア", use_container_width=True):
+            # 各行に削除ボタンを設置
+            if st.button("✖️", key=f"del_{i}"):
+                st.session_state.destinations.pop(i)
+                st.rerun() # 画面を再描画して削除を反映
+
+    # --- 操作ボタン ---
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("＋ 目的地を追加", use_container_width=True):
+            st.session_state.destinations.append('')
+            st.rerun()
+    with col2:
+        if st.button("クリア", use_container_width=True):
             st.session_state.destinations = ['']
             st.rerun()
 
-        st.write("---")
-        # 検索実行ボタン
+    st.write("---")
+
+    # --- 検索実行ボタン ---
+    # 検索はフォームで行い、一度に送信する
+    with st.form("search_form"):
         submitted = st.form_submit_button("最適経路を検索", type="primary", use_container_width=True)
 
 
