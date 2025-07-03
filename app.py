@@ -146,7 +146,7 @@ def check_search_limit():
         logger.info(f"過去1ヶ月の検索回数: {search_count}件")
 
         # 検索回数が200件以上かチェック
-        return search_count >= 2
+        return search_count >= 200
 
     except Exception as e:
         logger.error(f"検索上限チェック中に予期せぬエラーが発生しました: {e}")
