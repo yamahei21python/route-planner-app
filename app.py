@@ -33,33 +33,27 @@ with st.sidebar:
     # --- 出発地・帰着地 ---
     start_point = st.text_input("**出発地**", placeholder="例：東京駅")
 
-    same_as_start = st.checkbox("出発地と帰着地は同じ", value=True)
+    same_as_start = st.checkbox("出発地と帰着地を同じにする", value=True)
     if same_as_start:
         end_point = start_point
     else:
         end_point = st.text_input("**帰着地**", key='end_point', placeholder="例：新宿駅")
 
     # --- 目的地 ---
-    st.markdown("**目的地**")
-
-    # ▼▼▼【レイアウト修正箇所】▼▼▼
+    st.subheader("**目的地**")
     for i in range(len(st.session_state.destinations)):
-        # カラムの幅とgapを調整
-        col1, col2 = st.columns([4, 1], gap="small")
+        col1, col2 = st.columns([0.8, 0.2])
         with col1:
-            st.text_input(
+            st.session_state.destinations[i] = st.text_input(
                 f"目的地 {i+1}",
                 value=st.session_state.destinations[i],
                 key=f"dest_{i}",
-                label_visibility="collapsed",
-                placeholder=f"例：大阪駅" if i == 0 else ""
+                label_visibility="collapsed"
             )
         with col2:
-            # ボタンのuse_container_widthを外して自然なサイズにする
-            if st.button("✖️", key=f"del_{i}"):
+            if st.button("✖️", key=f"del_{i}", use_container_width=True):
                 st.session_state.destinations.pop(i)
                 st.rerun()
-    # ▲▲▲【レイアウト修正箇所】▲▲▲
 
     if st.button("＋ 目的地を追加", use_container_width=True):
         st.session_state.destinations.append('')
@@ -152,15 +146,19 @@ if submitted:
                     # --- テキストでの結果表示 ---
                     st.subheader("▼ 最適な訪問順序")
 
+                    # ▼▼▼【レイアウト修正箇所】▼▼▼
+                    # 指定されたフォーマットでテキストを生成
                     route_text_lines = []
                     route_text_lines.append(f"出 発 地: {start_point}")
                     for i, dest in enumerate(optimized_destinations):
                         route_text_lines.append(f"訪 問 先{i+1}: {dest}")
                     route_text_lines.append(f"帰 着 地: {end_point}")
-
+                    
                     final_route_text = "\n".join(route_text_lines)
-
+                    
+                    # st.text()を使い、等幅フォントで表示してレイアウトを維持
                     st.text(final_route_text)
+                    # ▲▲▲【レイアウト修正箇所】▲▲▲
 
                     with st.expander("▼ ルート詳細を表示"):
                         total_distance = 0
