@@ -40,30 +40,26 @@ with st.sidebar:
         end_point = st.text_input("**帰着地**", key='end_point', placeholder="例：新宿駅")
 
     # --- 目的地 ---
-    # ▼▼▼【フォントサイズ修正箇所】▼▼▼
-    for i in range(len(st.session_state.destinations)):
-        col1, col2 = st.columns([0.8, 0.2])
-        with col1:
-            # 1番目の入力欄にだけ「目的地」ラベルを表示し、フォントスタイルを統一
-            if i == 0:
-                label_text = "**目的地**"
-                visibility = "visible"
-            else:
-                label_text = f"目的地 {i+1}" # 表示されないプレースホルダー
-                visibility = "collapsed"
+    st.markdown("**目的地**")
 
-            st.session_state.destinations[i] = st.text_input(
-                label_text,
+    # ▼▼▼【レイアウト修正箇所】▼▼▼
+    for i in range(len(st.session_state.destinations)):
+        # カラムの幅とgapを調整
+        col1, col2 = st.columns([4, 1], gap="small")
+        with col1:
+            st.text_input(
+                f"目的地 {i+1}",
                 value=st.session_state.destinations[i],
                 key=f"dest_{i}",
-                label_visibility=visibility,
-                placeholder=f"例：大阪駅" if i == 0 else "" # 1番目だけにplaceholderを設定
+                label_visibility="collapsed",
+                placeholder=f"例：大阪駅" if i == 0 else ""
             )
         with col2:
-            if st.button("✖️", key=f"del_{i}", use_container_width=True):
+            # ボタンのuse_container_widthを外して自然なサイズにする
+            if st.button("✖️", key=f"del_{i}"):
                 st.session_state.destinations.pop(i)
                 st.rerun()
-    # ▲▲▲【フォントサイズ修正箇所】▲▲▲
+    # ▲▲▲【レイアウト修正箇所】▲▲▲
 
     if st.button("＋ 目的地を追加", use_container_width=True):
         st.session_state.destinations.append('')
