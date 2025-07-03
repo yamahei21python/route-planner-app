@@ -75,8 +75,8 @@ def log_to_github_csv(log_data):
         
         # --- ▼▼▼ 【ご依頼による修正箇所 1/3】列の順番を定義・適用 ▼▼▼ ---
         # CSVに出力する列の順番を定義
-        column_order = ['datetime', 'origin', 'waypoints', 'destination']
-        # DataFrameの列を定義した順番に並び替える（存在しない列は破棄される）
+        column_order = ['date', 'time', 'origin', 'waypoints', 'destination']
+        # DataFrameの列を定義した順番に並び替える
         updated_df = updated_df.reindex(columns=column_order)
         # --- ▲▲▲ 【ご依頼による修正箇所 1/3】列の順番を定義・適用 ▲▲▲ ---
 
@@ -85,7 +85,7 @@ def log_to_github_csv(log_data):
 
         # --- ▼▼▼ 【ご依頼による修正箇所 2/3】コミットメッセージの修正 ▼▼▼ ---
         # コミットメッセージを作成
-        commit_message = f"Append search log at {log_data['datetime']}"
+        commit_message = f"Append search log at {log_data['date']} {log_data['time']}"
         # --- ▲▲▲ 【ご依頼による修正箇所 2/3】コミットメッセージの修正 ▲▲▲ ---
 
         # ファイルを更新または新規作成
@@ -181,9 +181,10 @@ if submitted:
                         # 現在時刻を取得
                         now = datetime.now(JST)
                         # CSVのヘッダーに合わせた辞書形式でログデータを作成
-                        # ご指定の順番（datetime, origin, waypoints, destination）でキーを定義
+                        # ご指定の順番（date, time, origin, waypoints, destination）でキーを定義
                         log_data = {
-                            "datetime": now.strftime('%Y-%m-%d %H:%M:%S'),
+                            "date": now.strftime('%Y-%m-%d'),
+                            "time": now.strftime('%H:%M:%S'),
                             "origin": start_point,
                             "waypoints": ", ".join(optimized_destinations),
                             "destination": end_point
@@ -208,15 +209,15 @@ if submitted:
                             f"&destination={destination_encoded}"
                             f"&waypoints={waypoints_encoded}"
                         )
-                        standard_map_url = "https://www.google.com/maps/dir/" + "/".join([urllib.parse.quote(loc) for loc in [start_point] + optimized_destinations + [end_point]])
+                        Maps_url = "https://www.google.com/maps/dir/" + "/".join([urllib.parse.quote(loc) for loc in [start_point] + optimized_destinations + [end_point]])
                         
                         col1, col2 = st.columns(2)
                         with col1:
-                            st.link_button("🗺️ 新しいタブで地図を開く", url=standard_map_url, use_container_width=True)
+                            st.link_button("🗺️ 新しいタブで地図を開く", url=Maps_url, use_container_width=True)
                         with col2:
                             with st.popover("📱 QRコードを表示", use_container_width=True):
                                 qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=4, border=4)
-                                qr.add_data(standard_map_url)
+                                qr.add_data(Maps_url)
                                 qr.make(fit=True)
                                 qr_img = qr.make_image(fill_color="black", back_color="white")
                                 buf = io.BytesIO()
