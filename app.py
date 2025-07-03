@@ -73,7 +73,8 @@ if submitted:
                 if not directions_result:
                     st.error("経路が見つかりませんでした。住所を確認してください。")
                 else:
-                    st.success("✅ 最適経路の計算が完了しました！")
+                    # 【修正点①】完了メッセージを削除
+                    # st.success("✅ 最適経路の計算が完了しました！")
 
                     optimized_order = directions_result[0]['waypoint_order']
                     optimized_destinations = [destinations_input[i] for i in optimized_order]
@@ -82,7 +83,6 @@ if submitted:
                     st.subheader("▼ 地図で確認")
                     
                     try:
-                        # (1) URLを両方とも準備する
                         api_key = st.secrets["Maps_api_key"]
                         origin_encoded = urllib.parse.quote(start_point)
                         waypoints_encoded = "|".join([urllib.parse.quote(dest) for dest in optimized_destinations])
@@ -98,22 +98,28 @@ if submitted:
                         encoded_locations = [urllib.parse.quote(loc) for loc in full_route_locations]
                         standard_map_url = "https://www.google.com/maps/dir/" + "/".join(encoded_locations)
                         
-                        # (2) ボタンを2列で横に並べて表示
                         col1, col2 = st.columns(2)
                         with col1:
                             st.link_button("🗺️ 新しいタブで地図を開く", url=standard_map_url, use_container_width=True)
                         
                         with col2:
                             with st.popover("📱 QRコードを表示", use_container_width=True):
-                                # QRコードの生成
-                                qr_img = qrcode.make(standard_map_url)
-                                # メモリ上で画像を扱うためにBytesIOを使用
+                                # 【修正点②】QRコードのサイズを小さくする
+                                qr = qrcode.QRCode(
+                                    version=1,
+                                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                                    box_size=4,  # サイズを調整 (数値を小さくする)
+                                    border=4,
+                                )
+                                qr.add_data(standard_map_url)
+                                qr.make(fit=True)
+                                qr_img = qr.make_image(fill_color="black", back_color="white")
+                                
                                 buf = io.BytesIO()
                                 qr_img.save(buf)
                                 buf.seek(0)
                                 st.image(buf, caption="Google Maps URL")
 
-                        # (3) 埋め込み地図を表示
                         st.write("") 
                         st.components.v1.iframe(embed_url, height=500, scrolling=True)
 
@@ -121,7 +127,6 @@ if submitted:
                         st.error(f"地図の表示に失敗しました。APIキーの設定などを確認してください。エラー: {e}")
                     
                     # --- テキストでの結果表示 ---
-                    # 【レイアウト変更】地図の下に訪問順序を表示
                     st.subheader("▼ 最適な訪問順序")
                     route_text = f"**出発地:** {start_point}\n"
                     for i, dest in enumerate(optimized_destinations):
@@ -129,7 +134,6 @@ if submitted:
                     route_text += f"**帰着地:** {start_point}"
                     st.markdown(route_text)
 
-                    # 詳細ルートはExpander内に表示
                     with st.expander("▼ ルート詳細を表示"):
                         total_distance = 0
                         total_duration_sec = 0
