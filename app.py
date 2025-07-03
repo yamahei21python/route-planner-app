@@ -33,7 +33,6 @@ with st.sidebar:
     # --- 出発地・帰着地 ---
     start_point = st.text_input("**出発地**", placeholder="例：東京駅")
 
-    # 【修正②】チェックボックスの文言を変更
     same_as_start = st.checkbox("出発地と帰着地は同じ", value=True)
     if same_as_start:
         end_point = start_point
@@ -41,21 +40,30 @@ with st.sidebar:
         end_point = st.text_input("**帰着地**", key='end_point', placeholder="例：新宿駅")
 
     # --- 目的地 ---
-    # 【修正①】フォントスタイルを太字のテキストに変更
-    st.markdown("**目的地**")
+    # ▼▼▼【フォントサイズ修正箇所】▼▼▼
     for i in range(len(st.session_state.destinations)):
         col1, col2 = st.columns([0.8, 0.2])
         with col1:
+            # 1番目の入力欄にだけ「目的地」ラベルを表示し、フォントスタイルを統一
+            if i == 0:
+                label_text = "**目的地**"
+                visibility = "visible"
+            else:
+                label_text = f"目的地 {i+1}" # 表示されないプレースホルダー
+                visibility = "collapsed"
+
             st.session_state.destinations[i] = st.text_input(
-                f"目的地 {i+1}",
+                label_text,
                 value=st.session_state.destinations[i],
                 key=f"dest_{i}",
-                label_visibility="collapsed"
+                label_visibility=visibility,
+                placeholder=f"例：大阪駅" if i == 0 else "" # 1番目だけにplaceholderを設定
             )
         with col2:
             if st.button("✖️", key=f"del_{i}", use_container_width=True):
                 st.session_state.destinations.pop(i)
                 st.rerun()
+    # ▲▲▲【フォントサイズ修正箇所】▲▲▲
 
     if st.button("＋ 目的地を追加", use_container_width=True):
         st.session_state.destinations.append('')
@@ -147,15 +155,15 @@ if submitted:
 
                     # --- テキストでの結果表示 ---
                     st.subheader("▼ 最適な訪問順序")
-                    
+
                     route_text_lines = []
                     route_text_lines.append(f"出 発 地: {start_point}")
                     for i, dest in enumerate(optimized_destinations):
                         route_text_lines.append(f"訪 問 先{i+1}: {dest}")
                     route_text_lines.append(f"帰 着 地: {end_point}")
-                    
+
                     final_route_text = "\n".join(route_text_lines)
-                    
+
                     st.text(final_route_text)
 
                     with st.expander("▼ ルート詳細を表示"):
