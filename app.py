@@ -96,7 +96,7 @@ def log_to_github_csv(log_data):
         logger.error(f"GitHubへのログ記録に失敗しました: {e}")
         st.error(f"ログの記録に失敗しました。エラー: {e}")
 
-# --- ▼▼▼ 【ご依頼による追加機能】検索上限をチェックする関数 ▼▼▼ ---
+# --- ▼▼▼ 【修正案】エラー詳細を表示するよう改善した関数 ▼▼▼ ---
 def check_search_limit():
     """
     GitHubのログを読み込み、過去1ヶ月の検索回数が200件以上か確認する。
@@ -126,8 +126,9 @@ def check_search_limit():
                 logger.info("ログファイルが見つかりません。上限チェックはスキップします。")
                 return False
             else:
-                logger.error(f"GitHubからのログファイル取得に失敗しました: {e}")
-                st.error(f"システムの確認処理中にエラーが発生しました: {e}")
+                # 404以外のGitHubエラーの場合、詳細を表示する
+                st.error("GitHubからのログファイル取得に失敗しました。")
+                st.exception(e) # ★エラー詳細を画面に表示
                 return True # エラー時は安全のため検索をブロック
 
         # 'date'列をdatetime型に変換（不正な形式はNaTに）
@@ -138,7 +139,6 @@ def check_search_limit():
         one_month_ago = datetime.now(JST).date() - pd.DateOffset(months=1)
         
         # ログの日付が1ヶ月以内であるものをフィルタリング
-        # .dt.date を使って日付部分のみで比較
         recent_logs = log_df[log_df['date'].dt.date >= one_month_ago]
 
         search_count = len(recent_logs)
@@ -150,8 +150,9 @@ def check_search_limit():
     except Exception as e:
         logger.error(f"検索上限チェック中に予期せぬエラーが発生しました: {e}")
         st.error(f"検索上限の確認中にエラーが発生しました。製作者にご連絡ください。")
+        st.exception(e)  # ★★★ ここが重要！エラーの詳細情報をアプリ画面に表示します ★★★
         return True # 不明なエラー時は安全のために検索をブロック
-# --- ▲▲▲ 【ご依頼による追加機能】検索上限をチェックする関数 ▲▲▲ ---
+# --- ▲▲▲ 【修正案】エラー詳細を表示するよう改善した関数 ▲▲▲ ---
 
 
 # --- Google Maps APIクライアントの初期化 ---
