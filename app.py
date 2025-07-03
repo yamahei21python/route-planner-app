@@ -29,11 +29,13 @@ if 'end_point' not in st.session_state:
 # ===============================================================
 with st.sidebar:
     # ▼▼▼【レイアウト最終修正CSS】▼▼▼
-    # 削除ボタンを強制的に下にずらして中央揃えにするためのCSS
+    # ボタンのコンテナを親の高さに合わせ、中身を中央揃えにするCSS
     st.markdown("""
     <style>
         div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-of-type(2) > div {
-            margin-top: 28px;
+            display: flex;
+            align-items: center;
+            height: 100%;
         }
     </style>
     """, unsafe_allow_html=True)
