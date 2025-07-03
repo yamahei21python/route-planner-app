@@ -33,7 +33,7 @@ with st.sidebar:
     # --- 出発地・帰着地 ---
     start_point = st.text_input("**出発地**", placeholder="例：東京駅")
 
-    same_as_start = st.checkbox("出発地と帰着地を同じにする", value=True)
+    same_as_start = st.checkbox("出発地と帰着地は同じ", value=True)
     if same_as_start:
         end_point = start_point
     else:
