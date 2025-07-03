@@ -24,7 +24,6 @@ if 'destinations' not in st.session_state:
 if 'end_point' not in st.session_state:
     st.session_state.end_point = ''
 
-
 # ===============================================================
 # ▼▼▼ サイドバーの入力フォーム ▼▼▼
 # ===============================================================
@@ -34,7 +33,6 @@ with st.sidebar:
     # --- 出発地・帰着地 ---
     start_point = st.text_input("**出発地**", placeholder="例：東京駅")
 
-    # チェックボックスで帰着地の入力を切り替え
     same_as_start = st.checkbox("出発地と帰着地を同じにする", value=True)
     if same_as_start:
         end_point = start_point
@@ -44,16 +42,17 @@ with st.sidebar:
     # --- 目的地 ---
     st.subheader("**目的地**")
     for i in range(len(st.session_state.destinations)):
-        col1, col2 = st.columns([0.8, 0.2]) # 【修正】入力欄とボタンの幅の割合を調整
+        col1, col2 = st.columns([0.8, 0.2])
         with col1:
-            st.session_state.destinations.i] = st.text_input(
+            # 【修正】ここの構文エラーを修正
+            st.session_state.destinations[i] = st.text_input(
                 f"目的地 {i+1}",
-                value=st.session_state.destinationsi],
+                value=st.session_state.destinations[i],
                 key=f"dest_{i}",
                 label_visibility="collapsed"
             )
         with col2:
-            if st.button("✖️", key=f"del_{i}", use_container_width=True): # ボタンをコンテナ幅に合わせる
+            if st.button("✖️", key=f"del_{i}", use_container_width=True):
                 st.session_state.destinations.pop(i)
                 st.rerun()
 
@@ -72,7 +71,6 @@ with st.sidebar:
         st.session_state.end_point = ''
         st.rerun()
 
-
 # --- メイン画面の表示 ---
 st.title("最適経路提案アプリ")
 
@@ -89,7 +87,7 @@ if submitted:
             try:
                 directions_result = gmaps.directions(
                     origin=start_point,
-                    destination=end_point, # 帰着地を反映
+                    destination=end_point,
                     waypoints=destinations_input,
                     optimize_waypoints=True
                 )
@@ -97,26 +95,26 @@ if submitted:
                 if not directions_result:
                     st.error("経路が見つかりませんでした。住所を確認してください。")
                 else:
-                    optimized_order = directions_result0]['waypoint_order']
-                    optimized_destinations = [destinations_inputi] for i in optimized_order]
+                    # 【修正】ここの構文エラーを修正
+                    optimized_order = directions_result[0]['waypoint_order']
+                    optimized_destinations = [destinations_input[i] for i in optimized_order]
 
-                    # --- 地図表示と各種ボタン ---
                     st.subheader("▼ 地図で確認")
 
                     try:
                         api_key = st.secrets["Maps_api_key"]
                         origin_encoded = urllib.parse.quote(start_point)
-                        destination_encoded = urllib.parse.quote(end_point) # 帰着地を反映
+                        destination_encoded = urllib.parse.quote(end_point)
                         waypoints_encoded = "|".join([urllib.parse.quote(dest) for dest in optimized_destinations])
                         embed_url = (
                             f"https://www.google.com/maps/embed/v1/directions"
                             f"?key={api_key}"
                             f"&origin={origin_encoded}"
-                            f"&destination={destination_encoded}" # 帰着地を反映
+                            f"&destination={destination_encoded}"
                             f"&waypoints={waypoints_encoded}"
                         )
 
-                        full_route_locations = [start_point] + optimized_destinations + [end_point] # 帰着地を反映
+                        full_route_locations = [start_point] + optimized_destinations + [end_point]
                         encoded_locations = [urllib.parse.quote(loc) for loc in full_route_locations]
                         standard_map_url = "https://www.google.com/maps/dir/" + "/".join(encoded_locations)
 
@@ -147,18 +145,18 @@ if submitted:
                     except Exception as e:
                         st.error(f"地図の表示に失敗しました。APIキーの設定などを確認してください。エラー: {e}")
 
-                    # --- テキストでの結果表示 ---
                     st.subheader("▼ 最適な訪問順序")
                     route_text = f"**出発地:** {start_point}\n"
                     for i, dest in enumerate(optimized_destinations):
                         route_text += f"1. **{i+1}番目の訪問先:** {dest}\n"
-                    route_text += f"**帰着地:** {end_point}" # 帰着地を反映
+                    route_text += f"**帰着地:** {end_point}"
                     st.markdown(route_text)
 
                     with st.expander("▼ ルート詳細を表示"):
                         total_distance = 0
                         total_duration_sec = 0
-                        for i, leg in enumerate(directions_result0]['legs']):
+                        # 【修正】ここの構文エラーを修正
+                        for i, leg in enumerate(directions_result[0]['legs']):
                             st.markdown(f"---")
                             st.markdown(f"**区間 {i+1}**")
                             st.markdown(f"🚗 **出発:** {leg['start_address']}")
