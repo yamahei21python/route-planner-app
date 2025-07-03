@@ -126,7 +126,6 @@ col1, col2 = st.columns([0.4, 0.6]) # レイアウトを2カラムに
 
 # --- 左カラム：地図表示 ---
 with col1:
-    st.subheader("📍 マップ")
     
     # 入力されたすべての地点をリスト化
     all_locations_input = [start_point] + [d for d in st.session_state.destinations if d.strip()]
