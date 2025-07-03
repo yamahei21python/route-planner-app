@@ -20,7 +20,6 @@ st.set_page_config(
 )
 
 # --- ロガーの設定 ---
-# (元のコードのままでOK)
 def setup_logger():
     logger = logging.getLogger('route_logger')
     logger.setLevel(logging.INFO)
@@ -69,26 +68,25 @@ def log_to_github_csv(log_data):
         # 既存のログを読み込み、新しいログと結合
         if existing_content:
             existing_df = pd.read_csv(io.StringIO(existing_content))
-            # 新しい列（date, time）が存在しない場合、既存のDataFrameに追加
-            if 'date' not in existing_df.columns:
-                existing_df['date'] = pd.to_datetime(existing_df['timestamp']).dt.date
-            if 'time' not in existing_df.columns:
-                existing_df['time'] = pd.to_datetime(existing_df['timestamp']).dt.time
-            if 'timestamp' in existing_df.columns:
-                 existing_df = existing_df.drop(columns=['timestamp'])
-
             updated_df = pd.concat([existing_df, new_log_df], ignore_index=True)
         else:
             # ファイルが空だった場合（初回書き込み）
             updated_df = new_log_df
         
+        # --- ▼▼▼ 【ご依頼による修正箇所 1/3】列の順番を定義・適用 ▼▼▼ ---
+        # CSVに出力する列の順番を定義
+        column_order = ['datetime', 'origin', 'waypoints', 'destination']
+        # DataFrameの列を定義した順番に並び替える（存在しない列は破棄される）
+        updated_df = updated_df.reindex(columns=column_order)
+        # --- ▲▲▲ 【ご依頼による修正箇所 1/3】列の順番を定義・適用 ▲▲▲ ---
+
         # DataFrameをCSV形式の文字列に変換（ヘッダー付き、インデックスなし）
         csv_string = updated_df.to_csv(index=False)
 
-        # --- ▼▼▼ 【ご依頼による修正箇所 1/2】 ▼▼▼ ---
+        # --- ▼▼▼ 【ご依頼による修正箇所 2/3】コミットメッセージの修正 ▼▼▼ ---
         # コミットメッセージを作成
-        commit_message = f"Append search log at {log_data['date']} {log_data['time']}"
-        # --- ▲▲▲ 【ご依頼による修正箇所 1/2】 ▲▲▲ ---
+        commit_message = f"Append search log at {log_data['datetime']}"
+        # --- ▲▲▲ 【ご依頼による修正箇所 2/3】コミットメッセージの修正 ▲▲▲ ---
 
         # ファイルを更新または新規作成
         if sha:
@@ -121,7 +119,6 @@ if 'end_point' not in st.session_state:
 # ===============================================================
 # ▼▼▼ サイドバーの入力フォーム ▼▼▼
 # ===============================================================
-# (このセクションは元のコードのままでOK)
 with st.sidebar:
     st.title("🗺️ ルート設定")
     start_point = st.text_input("**出発地**", placeholder="例：東京駅")
@@ -179,23 +176,23 @@ if submitted:
                     optimized_order = directions_result[0]['waypoint_order']
                     optimized_destinations = [destinations_input[i] for i in optimized_order]
 
-                    # --- ▼▼▼ 【ご依頼による修正箇所 2/2】ログ記録処理の呼び出し ▼▼▼ ---
+                    # --- ▼▼▼ 【ご依頼による修正箇所 3/3】ログ記録処理の呼び出し ▼▼▼ ---
                     try:
                         # 現在時刻を取得
                         now = datetime.now(JST)
                         # CSVのヘッダーに合わせた辞書形式でログデータを作成
+                        # ご指定の順番（datetime, origin, waypoints, destination）でキーを定義
                         log_data = {
-                            "date": now.strftime('%Y-%m-%d'),
-                            "time": now.strftime('%H:%M:%S'),
+                            "datetime": now.strftime('%Y-%m-%d %H:%M:%S'),
                             "origin": start_point,
-                            "waypoints": ", ".join(optimized_destinations), # 複数の目的地はカンマ区切りで結合
+                            "waypoints": ", ".join(optimized_destinations),
                             "destination": end_point
                         }
                         # 作成した関数を呼び出す
                         log_to_github_csv(log_data)
                     except Exception as log_e:
                         logger.error(f"ログデータの作成または書き込みに失敗しました: {log_e}")
-                    # --- ▲▲▲ 【ご依頼による修正箇所 2/2】ログ記録処理の呼び出し ▲▲▲ ---
+                    # --- ▲▲▲ 【ご依頼による修正箇所 3/3】ログ記録処理の呼び出し ▲▲▲ ---
 
                     # --- ▼▼▼ 以降の処理は元のコードのまま ▼▼▼ ---
                     st.subheader("▼ 地図で確認")
