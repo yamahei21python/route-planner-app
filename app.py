@@ -287,10 +287,10 @@ if submitted:
                             st.error(f"地図の表示に失敗しました。APIキーの設定などを確認してください。エラー: {e}")
 
                         st.subheader("▼ 最適な訪問順序")
-                        route_text_lines = [f"出 発 地: {start_point}"]
+                        route_text_lines = [f"出 発 地 : {start_point}"]
                         for i, dest in enumerate(optimized_destinations):
                             route_text_lines.append(f"訪問先{i+1} : {dest}")
-                        route_text_lines.append(f"帰 着 地: {end_point}")
+                        route_text_lines.append(f"帰 着 地 : {end_point}")
                         final_route_text = "\n".join(route_text_lines)
                         st.text(final_route_text)
 
