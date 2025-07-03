@@ -1,5 +1,3 @@
-# streamlit_app.py
-
 import streamlit as st
 import googlemaps
 import urllib.parse
@@ -71,16 +69,26 @@ def log_to_github_csv(log_data):
         # 既存のログを読み込み、新しいログと結合
         if existing_content:
             existing_df = pd.read_csv(io.StringIO(existing_content))
+            # 新しい列（date, time）が存在しない場合、既存のDataFrameに追加
+            if 'date' not in existing_df.columns:
+                existing_df['date'] = pd.to_datetime(existing_df['timestamp']).dt.date
+            if 'time' not in existing_df.columns:
+                existing_df['time'] = pd.to_datetime(existing_df['timestamp']).dt.time
+            if 'timestamp' in existing_df.columns:
+                 existing_df = existing_df.drop(columns=['timestamp'])
+
             updated_df = pd.concat([existing_df, new_log_df], ignore_index=True)
         else:
             # ファイルが空だった場合（初回書き込み）
             updated_df = new_log_df
-
+        
         # DataFrameをCSV形式の文字列に変換（ヘッダー付き、インデックスなし）
         csv_string = updated_df.to_csv(index=False)
 
+        # --- ▼▼▼ 【ご依頼による修正箇所 1/2】 ▼▼▼ ---
         # コミットメッセージを作成
-        commit_message = f"Append search log at {log_data['timestamp']}"
+        commit_message = f"Append search log at {log_data['date']} {log_data['time']}"
+        # --- ▲▲▲ 【ご依頼による修正箇所 1/2】 ▲▲▲ ---
 
         # ファイルを更新または新規作成
         if sha:
@@ -171,11 +179,14 @@ if submitted:
                     optimized_order = directions_result[0]['waypoint_order']
                     optimized_destinations = [destinations_input[i] for i in optimized_order]
 
-                    # --- ▼▼▼ 【ステップ5で修正】ログ記録処理の呼び出し ▼▼▼ ---
+                    # --- ▼▼▼ 【ご依頼による修正箇所 2/2】ログ記録処理の呼び出し ▼▼▼ ---
                     try:
+                        # 現在時刻を取得
+                        now = datetime.now(JST)
                         # CSVのヘッダーに合わせた辞書形式でログデータを作成
                         log_data = {
-                            "timestamp": datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S'),
+                            "date": now.strftime('%Y-%m-%d'),
+                            "time": now.strftime('%H:%M:%S'),
                             "origin": start_point,
                             "waypoints": ", ".join(optimized_destinations), # 複数の目的地はカンマ区切りで結合
                             "destination": end_point
@@ -184,7 +195,7 @@ if submitted:
                         log_to_github_csv(log_data)
                     except Exception as log_e:
                         logger.error(f"ログデータの作成または書き込みに失敗しました: {log_e}")
-                    # --- ▲▲▲ 【ステップ5で修正】ログ記録処理の呼び出し ▲▲▲ ---
+                    # --- ▲▲▲ 【ご依頼による修正箇所 2/2】ログ記録処理の呼び出し ▲▲▲ ---
 
                     # --- ▼▼▼ 以降の処理は元のコードのまま ▼▼▼ ---
                     st.subheader("▼ 地図で確認")
@@ -201,6 +212,7 @@ if submitted:
                             f"&waypoints={waypoints_encoded}"
                         )
                         standard_map_url = "https://www.google.com/maps/dir/" + "/".join([urllib.parse.quote(loc) for loc in [start_point] + optimized_destinations + [end_point]])
+                        
                         col1, col2 = st.columns(2)
                         with col1:
                             st.link_button("🗺️ 新しいタブで地図を開く", url=standard_map_url, use_container_width=True)
@@ -214,10 +226,13 @@ if submitted:
                                 qr_img.save(buf)
                                 buf.seek(0)
                                 st.image(buf, caption="Google Maps URL")
+
                         st.write("")
                         st.components.v1.iframe(embed_url, height=500, scrolling=True)
+
                     except Exception as e:
                         st.error(f"地図の表示に失敗しました。APIキーの設定などを確認してください。エラー: {e}")
+
                     st.subheader("▼ 最適な訪問順序")
                     route_text_lines = [f"出 発 地: {start_point}"]
                     for i, dest in enumerate(optimized_destinations):
@@ -225,6 +240,7 @@ if submitted:
                     route_text_lines.append(f"帰 着 地: {end_point}")
                     final_route_text = "\n".join(route_text_lines)
                     st.text(final_route_text)
+
                     with st.expander("▼ ルート詳細を表示"):
                         total_distance = 0
                         total_duration_sec = 0
@@ -242,6 +258,7 @@ if submitted:
                         total_duration_min = total_duration_sec // 60
                         st.markdown(f"- **総移動距離:** {total_distance / 1000:.1f} km")
                         st.markdown(f"- **総所要時間:** 約{total_duration_min // 60}時間 {total_duration_min % 60}分")
+
             except googlemaps.exceptions.ApiError as e:
                 st.error(f"Google Maps APIエラーが発生しました: {e}")
             except Exception as e:
