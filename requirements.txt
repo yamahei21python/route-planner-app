@@ -1,4 +1,6 @@
 streamlit
 googlemaps
 qrcode
-Pillow
+pytz
+pandas
+PyGithub
