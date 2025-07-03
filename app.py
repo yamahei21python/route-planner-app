@@ -6,11 +6,9 @@ import io
 import logging
 from datetime import datetime
 import pytz
-# --- ▼ ステップ5で追加するライブラリ ▼ ---
 import pandas as pd
 from github import Github
 from github.GithubException import GithubException
-# --- ▲ ステップ5で追加するライブラリ ▲ ---
 
 # --- ページ設定 ---
 st.set_page_config(
@@ -33,7 +31,7 @@ def setup_logger():
 logger = setup_logger()
 JST = pytz.timezone('Asia/Tokyo')
 
-# --- 【ステップ5で追加】GitHubのCSVにログを記録する関数 ---
+# --- GitHubのCSVにログを記録する関数 ---
 def log_to_github_csv(log_data):
     """
     Secretsの情報を使ってGitHubリポジトリのCSVファイルにログを追記する
@@ -73,20 +71,16 @@ def log_to_github_csv(log_data):
             # ファイルが空だった場合（初回書き込み）
             updated_df = new_log_df
         
-        # --- ▼▼▼ 【ご依頼による修正箇所 1/3】列の順番を定義・適用 ▼▼▼ ---
         # CSVに出力する列の順番を定義
         column_order = ['date', 'time', 'origin', 'waypoints', 'destination']
         # DataFrameの列を定義した順番に並び替える
         updated_df = updated_df.reindex(columns=column_order)
-        # --- ▲▲▲ 【ご依頼による修正箇所 1/3】列の順番を定義・適用 ▲▲▲ ---
 
         # DataFrameをCSV形式の文字列に変換（ヘッダー付き、インデックスなし）
         csv_string = updated_df.to_csv(index=False)
 
-        # --- ▼▼▼ 【ご依頼による修正箇所 2/3】コミットメッセージの修正 ▼▼▼ ---
         # コミットメッセージを作成
         commit_message = f"Append search log at {log_data['date']} {log_data['time']}"
-        # --- ▲▲▲ 【ご依頼による修正箇所 2/3】コミットメッセージの修正 ▲▲▲ ---
 
         # ファイルを更新または新規作成
         if sha:
@@ -101,6 +95,63 @@ def log_to_github_csv(log_data):
     except Exception as e:
         logger.error(f"GitHubへのログ記録に失敗しました: {e}")
         st.error(f"ログの記録に失敗しました。エラー: {e}")
+
+# --- ▼▼▼ 【ご依頼による追加機能】検索上限をチェックする関数 ▼▼▼ ---
+def check_search_limit():
+    """
+    GitHubのログを読み込み、過去1ヶ月の検索回数が200件以上か確認する。
+    200件を超えている場合はTrueを、そうでない場合はFalseを返す。
+    """
+    try:
+        # SecretsからGitHub情報を取得
+        token = st.secrets["github"]["token"]
+        repo_name = st.secrets["github"]["repo"]
+        file_path = st.secrets["github"]["path"]
+
+        g = Github(token)
+        repo = g.get_repo(repo_name)
+
+        try:
+            # GitHubからログファイルを取得
+            contents = repo.get_contents(file_path, ref="main")
+            log_content = contents.decoded_content.decode("utf-8")
+            log_df = pd.read_csv(io.StringIO(log_content))
+            
+            if log_df.empty:
+                logger.info("ログファイルは空です。上限チェックをスキップします。")
+                return False
+
+        except GithubException as e:
+            if e.status == 404: # ファイルが存在しない場合は上限に達していない
+                logger.info("ログファイルが見つかりません。上限チェックはスキップします。")
+                return False
+            else:
+                logger.error(f"GitHubからのログファイル取得に失敗しました: {e}")
+                st.error(f"システムの確認処理中にエラーが発生しました: {e}")
+                return True # エラー時は安全のため検索をブロック
+
+        # 'date'列をdatetime型に変換（不正な形式はNaTに）
+        log_df['date'] = pd.to_datetime(log_df['date'], errors='coerce')
+        log_df.dropna(subset=['date'], inplace=True) # NaTを含む行を削除
+
+        # JSTの現在日付から1ヶ月前の日付を計算
+        one_month_ago = datetime.now(JST).date() - pd.DateOffset(months=1)
+        
+        # ログの日付が1ヶ月以内であるものをフィルタリング
+        # .dt.date を使って日付部分のみで比較
+        recent_logs = log_df[log_df['date'].dt.date >= one_month_ago]
+
+        search_count = len(recent_logs)
+        logger.info(f"過去1ヶ月の検索回数: {search_count}件")
+
+        # 検索回数が200件以上かチェック
+        return search_count >= 200
+
+    except Exception as e:
+        logger.error(f"検索上限チェック中に予期せぬエラーが発生しました: {e}")
+        st.error(f"検索上限の確認中にエラーが発生しました。製作者にご連絡ください。")
+        return True # 不明なエラー時は安全のために検索をブロック
+# --- ▲▲▲ 【ご依頼による追加機能】検索上限をチェックする関数 ▲▲▲ ---
 
 
 # --- Google Maps APIクライアントの初期化 ---
@@ -157,107 +208,110 @@ if not submitted:
     st.info("サイドバーから出発地と目的地を入力し、「最適経路を検索」ボタンを押してください。")
 
 # --- 検索処理と結果表示 ---
+# --- ▼▼▼ 【ご依頼による修正箇所】検索上限チェックのロジックを統合 ▼▼▼ ---
 if submitted:
     destinations_input = [d for d in st.session_state.destinations if d.strip()]
     if not start_point or not end_point or not destinations_input:
         st.warning("出発地、帰着地、および少なくとも1つの目的地を入力してください。")
     else:
-        with st.spinner('最適経路を検索中...'):
-            try:
-                directions_result = gmaps.directions(
-                    origin=start_point,
-                    destination=end_point,
-                    waypoints=destinations_input,
-                    optimize_waypoints=True
-                )
-                if not directions_result:
-                    st.error("経路が見つかりませんでした。住所を確認してください。")
-                else:
-                    optimized_order = directions_result[0]['waypoint_order']
-                    optimized_destinations = [destinations_input[i] for i in optimized_order]
+        # 最初に検索上限をチェックする
+        if check_search_limit():
+            # 上限に達していたらエラーメッセージを表示して終了
+            st.error("検索上限に達しました、製作者まで連絡してください")
+        else:
+            # 上限に達していなければ、通常の検索処理を実行
+            with st.spinner('最適経路を検索中...'):
+                try:
+                    directions_result = gmaps.directions(
+                        origin=start_point,
+                        destination=end_point,
+                        waypoints=destinations_input,
+                        optimize_waypoints=True
+                    )
+                    if not directions_result:
+                        st.error("経路が見つかりませんでした。住所を確認してください。")
+                    else:
+                        optimized_order = directions_result[0]['waypoint_order']
+                        optimized_destinations = [destinations_input[i] for i in optimized_order]
 
-                    # --- ▼▼▼ 【ご依頼による修正箇所 3/3】ログ記録処理の呼び出し ▼▼▼ ---
-                    try:
-                        # 現在時刻を取得
-                        now = datetime.now(JST)
-                        # CSVのヘッダーに合わせた辞書形式でログデータを作成
-                        # ご指定の順番（date, time, origin, waypoints, destination）でキーを定義
-                        log_data = {
-                            "date": now.strftime('%Y-%m-%d'),
-                            "time": now.strftime('%H:%M:%S'),
-                            "origin": start_point,
-                            "waypoints": ", ".join(optimized_destinations),
-                            "destination": end_point
-                        }
-                        # 作成した関数を呼び出す
-                        log_to_github_csv(log_data)
-                    except Exception as log_e:
-                        logger.error(f"ログデータの作成または書き込みに失敗しました: {log_e}")
-                    # --- ▲▲▲ 【ご依頼による修正箇所 3/3】ログ記録処理の呼び出し ▲▲▲ ---
+                        # ログ記録処理
+                        try:
+                            now = datetime.now(JST)
+                            log_data = {
+                                "date": now.strftime('%Y-%m-%d'),
+                                "time": now.strftime('%H:%M:%S'),
+                                "origin": start_point,
+                                "waypoints": ", ".join(optimized_destinations),
+                                "destination": end_point
+                            }
+                            log_to_github_csv(log_data)
+                        except Exception as log_e:
+                            logger.error(f"ログデータの作成または書き込みに失敗しました: {log_e}")
 
-                    # --- ▼▼▼ 以降の処理は元のコードのまま ▼▼▼ ---
-                    st.subheader("▼ 地図で確認")
-                    try:
-                        api_key = st.secrets["Maps_api_key"]
-                        origin_encoded = urllib.parse.quote(start_point)
-                        destination_encoded = urllib.parse.quote(end_point)
-                        waypoints_encoded = "|".join([urllib.parse.quote(dest) for dest in optimized_destinations])
-                        embed_url = (
-                            f"https://www.google.com/maps/embed/v1/directions"
-                            f"?key={api_key}"
-                            f"&origin={origin_encoded}"
-                            f"&destination={destination_encoded}"
-                            f"&waypoints={waypoints_encoded}"
-                        )
-                        Maps_url = "https://www.google.com/maps/dir/" + "/".join([urllib.parse.quote(loc) for loc in [start_point] + optimized_destinations + [end_point]])
-                        
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.link_button("🗺️ 新しいタブで地図を開く", url=Maps_url, use_container_width=True)
-                        with col2:
-                            with st.popover("📱 QRコードを表示", use_container_width=True):
-                                qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=4, border=4)
-                                qr.add_data(Maps_url)
-                                qr.make(fit=True)
-                                qr_img = qr.make_image(fill_color="black", back_color="white")
-                                buf = io.BytesIO()
-                                qr_img.save(buf)
-                                buf.seek(0)
-                                st.image(buf, caption="Google Maps URL")
+                        # --- 結果表示処理 ---
+                        st.subheader("▼ 地図で確認")
+                        try:
+                            api_key = st.secrets["Maps_api_key"]
+                            origin_encoded = urllib.parse.quote(start_point)
+                            destination_encoded = urllib.parse.quote(end_point)
+                            waypoints_encoded = "|".join([urllib.parse.quote(dest) for dest in optimized_destinations])
+                            embed_url = (
+                                f"https://www.google.com/maps/embed/v1/directions"
+                                f"?key={api_key}"
+                                f"&origin={origin_encoded}"
+                                f"&destination={destination_encoded}"
+                                f"&waypoints={waypoints_encoded}"
+                            )
+                            Maps_url = "https://www.google.com/maps/dir/" + "/".join([urllib.parse.quote(loc) for loc in [start_point] + optimized_destinations + [end_point]])
+                            
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.link_button("🗺️ 新しいタブで地図を開く", url=Maps_url, use_container_width=True)
+                            with col2:
+                                with st.popover("📱 QRコードを表示", use_container_width=True):
+                                    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=4, border=4)
+                                    qr.add_data(Maps_url)
+                                    qr.make(fit=True)
+                                    qr_img = qr.make_image(fill_color="black", back_color="white")
+                                    buf = io.BytesIO()
+                                    qr_img.save(buf)
+                                    buf.seek(0)
+                                    st.image(buf, caption="Google Maps URL")
 
-                        st.write("")
-                        st.components.v1.iframe(embed_url, height=500, scrolling=True)
+                            st.write("")
+                            st.components.v1.iframe(embed_url, height=500, scrolling=True)
 
-                    except Exception as e:
-                        st.error(f"地図の表示に失敗しました。APIキーの設定などを確認してください。エラー: {e}")
+                        except Exception as e:
+                            st.error(f"地図の表示に失敗しました。APIキーの設定などを確認してください。エラー: {e}")
 
-                    st.subheader("▼ 最適な訪問順序")
-                    route_text_lines = [f"出 発 地: {start_point}"]
-                    for i, dest in enumerate(optimized_destinations):
-                        route_text_lines.append(f"訪 問 先{i+1}: {dest}")
-                    route_text_lines.append(f"帰 着 地: {end_point}")
-                    final_route_text = "\n".join(route_text_lines)
-                    st.text(final_route_text)
+                        st.subheader("▼ 最適な訪問順序")
+                        route_text_lines = [f"出 発 地: {start_point}"]
+                        for i, dest in enumerate(optimized_destinations):
+                            route_text_lines.append(f"訪 問 先{i+1}: {dest}")
+                        route_text_lines.append(f"帰 着 地: {end_point}")
+                        final_route_text = "\n".join(route_text_lines)
+                        st.text(final_route_text)
 
-                    with st.expander("▼ ルート詳細を表示"):
-                        total_distance = 0
-                        total_duration_sec = 0
-                        for i, leg in enumerate(directions_result[0]['legs']):
+                        with st.expander("▼ ルート詳細を表示"):
+                            total_distance = 0
+                            total_duration_sec = 0
+                            for i, leg in enumerate(directions_result[0]['legs']):
+                                st.markdown("---")
+                                st.markdown(f"**区間 {i+1}**")
+                                st.markdown(f"🚗 **出発:** {leg['start_address']}")
+                                st.markdown(f"🏁 **到着:** {leg['end_address']}")
+                                st.markdown(f"📏 **距離:** {leg['distance']['text']}")
+                                st.markdown(f"🕒 **所要時間:** {leg['duration']['text']}")
+                                total_distance += leg['distance']['value']
+                                total_duration_sec += leg['duration']['value']
                             st.markdown("---")
-                            st.markdown(f"**区間 {i+1}**")
-                            st.markdown(f"🚗 **出発:** {leg['start_address']}")
-                            st.markdown(f"🏁 **到着:** {leg['end_address']}")
-                            st.markdown(f"📏 **距離:** {leg['distance']['text']}")
-                            st.markdown(f"🕒 **所要時間:** {leg['duration']['text']}")
-                            total_distance += leg['distance']['value']
-                            total_duration_sec += leg['duration']['value']
-                        st.markdown("---")
-                        st.subheader("サマリー")
-                        total_duration_min = total_duration_sec // 60
-                        st.markdown(f"- **総移動距離:** {total_distance / 1000:.1f} km")
-                        st.markdown(f"- **総所要時間:** 約{total_duration_min // 60}時間 {total_duration_min % 60}分")
+                            st.subheader("サマリー")
+                            total_duration_min = total_duration_sec // 60
+                            st.markdown(f"- **総移動距離:** {total_distance / 1000:.1f} km")
+                            st.markdown(f"- **総所要時間:** 約{total_duration_min // 60}時間 {total_duration_min % 60}分")
 
-            except googlemaps.exceptions.ApiError as e:
-                st.error(f"Google Maps APIエラーが発生しました: {e}")
-            except Exception as e:
-                st.error(f"予期せぬエラーが発生しました: {e}")
+                except googlemaps.exceptions.ApiError as e:
+                    st.error(f"Google Maps APIエラーが発生しました: {e}")
+                except Exception as e:
+                    st.error(f"予期せぬエラーが発生しました: {e}")
+# --- ▲▲▲ 【ご依頼による修正箇所】検索上限チェックのロジックを統合 ▲▲▲ ---
