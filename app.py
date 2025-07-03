@@ -21,6 +21,9 @@ except Exception as e:
 # --- Session Stateの初期化 ---
 if 'destinations' not in st.session_state:
     st.session_state.destinations = ['']
+if 'end_point' not in st.session_state:
+    st.session_state.end_point = ''
+
 
 # ===============================================================
 # ▼▼▼ サイドバーの入力フォーム ▼▼▼
@@ -28,15 +31,20 @@ if 'destinations' not in st.session_state:
 with st.sidebar:
     st.title("🗺️ ルート設定")
 
-    # --- 出発地 ---
-    start_point = st.text_input("**出発地 兼 帰着地**", placeholder="例：東京駅")
+    # --- 出発地・帰着地 ---
+    start_point = st.text_input("**出発地**", placeholder="例：東京駅")
+    
+    # チェックボックスで帰着地の入力を切り替え
+    same_as_start = st.checkbox("出発地と帰着地を同じにする", value=True)
+    if same_as_start:
+        end_point = start_point
+    else:
+        end_point = st.text_input("**帰着地**", key='end_point', placeholder="例：新宿駅")
 
     # --- 目的地 ---
     st.subheader("**目的地**")
-
-    # 各目的地入力欄と削除ボタンを動的に生成
     for i in range(len(st.session_state.destinations)):
-        col1, col2 = st.columns([0.9, 0.1]) # 入力欄とボタンの幅を調整
+        col1, col2 = st.columns([0.9, 0.1])
         with col1:
             st.session_state.destinations[i] = st.text_input(
                 f"目的地 {i+1}",
@@ -45,28 +53,24 @@ with st.sidebar:
                 label_visibility="collapsed"
             )
         with col2:
-            # 各行に削除ボタンを設置
             if st.button("✖️", key=f"del_{i}"):
                 st.session_state.destinations.pop(i)
-                st.rerun() # 画面を再描画して削除を反映
+                st.rerun()
 
-    # --- 操作ボタン ---
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("＋ 目的地を追加", use_container_width=True):
-            st.session_state.destinations.append('')
-            st.rerun()
-    with col2:
-        if st.button("クリア", use_container_width=True):
-            st.session_state.destinations = ['']
-            st.rerun()
+    if st.button("＋ 目的地を追加", use_container_width=True):
+        st.session_state.destinations.append('')
+        st.rerun()
 
     st.write("---")
 
-    # --- 検索実行ボタン ---
-    # 検索はフォームで行い、一度に送信する
+    # --- 検索とクリアボタン ---
     with st.form("search_form"):
         submitted = st.form_submit_button("最適経路を検索", type="primary", use_container_width=True)
+
+    if st.button("クリア", use_container_width=True):
+        st.session_state.destinations = ['']
+        st.session_state.end_point = ''
+        st.rerun()
 
 
 # --- メイン画面の表示 ---
@@ -78,14 +82,14 @@ if not submitted:
 # --- 検索処理と結果表示 ---
 if submitted:
     destinations_input = [d for d in st.session_state.destinations if d.strip()]
-    if not start_point or not destinations_input:
-        st.warning("出発地と少なくとも1つの目的地を入力してください。")
+    if not start_point or not end_point or not destinations_input:
+        st.warning("出発地、帰着地、および少なくとも1つの目的地を入力してください。")
     else:
         with st.spinner('最適経路を検索中...'):
             try:
                 directions_result = gmaps.directions(
                     origin=start_point,
-                    destination=start_point,
+                    destination=end_point, # 帰着地を反映
                     waypoints=destinations_input,
                     optimize_waypoints=True
                 )
@@ -102,16 +106,17 @@ if submitted:
                     try:
                         api_key = st.secrets["Maps_api_key"]
                         origin_encoded = urllib.parse.quote(start_point)
+                        destination_encoded = urllib.parse.quote(end_point) # 帰着地を反映
                         waypoints_encoded = "|".join([urllib.parse.quote(dest) for dest in optimized_destinations])
                         embed_url = (
                             f"https://www.google.com/maps/embed/v1/directions"
                             f"?key={api_key}"
                             f"&origin={origin_encoded}"
-                            f"&destination={origin_encoded}"
+                            f"&destination={destination_encoded}" # 帰着地を反映
                             f"&waypoints={waypoints_encoded}"
                         )
                         
-                        full_route_locations = [start_point] + optimized_destinations + [start_point]
+                        full_route_locations = [start_point] + optimized_destinations + [end_point] # 帰着地を反映
                         encoded_locations = [urllib.parse.quote(loc) for loc in full_route_locations]
                         standard_map_url = "https://www.google.com/maps/dir/" + "/".join(encoded_locations)
                         
@@ -147,7 +152,7 @@ if submitted:
                     route_text = f"**出発地:** {start_point}\n"
                     for i, dest in enumerate(optimized_destinations):
                         route_text += f"1. **{i+1}番目の訪問先:** {dest}\n"
-                    route_text += f"**帰着地:** {start_point}"
+                    route_text += f"**帰着地:** {end_point}" # 帰着地を反映
                     st.markdown(route_text)
 
                     with st.expander("▼ ルート詳細を表示"):
