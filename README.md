@@ -1,5 +1,7 @@
 # route-planner-app
 
+https://dashboard.uptimerobot.com/monitorsにて眠り防止実行中
+
 🗺️ 最適経路提案アプリ (Optimal Route Planner)
 複数の目的地を巡るための最適なルートを提案するStreamlitアプリケーションです。Google Maps APIを利用して、入力された複数の訪問先を最も効率的に回る順番を計算し、インタラクティブな地図上に表示します。
 
