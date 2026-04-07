@@ -33,20 +33,20 @@ export default function Sidebar({
   const loadSampleData = () => {
     setOrigin("東京駅");
     setDestination("東京駅");
-    setWaypoints(["皇居", "東京タワー", "浅草寺", "上野恩賜公園"]);
+    setWaypoints(["皇居", "東京タワー", "浅草寺"]);
     if (setOptimizedRoute) setOptimizedRoute(null);
   };
 
   return (
-    <div className="w-[380px] bg-white h-full shadow-[var(--shadow-uber-medium)] z-10 flex flex-col pt-6 flex-shrink-0 relative">
+    <div className="w-[380px] bg-white h-full shadow-[var(--shadow-uber-medium)] z-10 flex flex-col pt-6 flex-shrink-0 relative font-sans">
 
       {/* Header */}
       <div className="px-6 pb-4 border-b border-gray-100">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--color-uber-black)]">Route Planner</h1>
+          <h1 className="text-3xl font-bold tracking-tighter text-[var(--color-uber-black)]">Route Planner</h1>
           <button
             onClick={loadSampleData}
-            className="text-[10px] font-bold bg-[var(--color-chip-gray)] px-2 py-1 rounded-full hover:bg-[var(--color-hover-gray)] transition-colors"
+            className="text-[10px] font-bold bg-[var(--color-chip-gray)] px-2.5 py-1 rounded-full hover:bg-[var(--color-hover-gray)] transition-colors"
           >
             サンプル
           </button>
@@ -128,9 +128,9 @@ export default function Sidebar({
           <button
             onClick={onOptimize}
             disabled={isOptimizing}
-            className="w-full bg-[var(--color-uber-black)] text-white font-medium py-3.5 px-4 rounded-[var(--radius-full)] hover:bg-[#333] transition-colors disabled:opacity-50 flex justify-center items-center shadow-[var(--shadow-uber-floating)] hover:translate-y-[1px] active:translate-y-[2px] active:shadow-none"
+            className="w-full bg-[var(--color-uber-black)] text-white font-bold py-3.5 px-4 rounded-[var(--radius-full)] hover:bg-[#333] transition-colors disabled:opacity-50 flex justify-center items-center shadow-[var(--shadow-uber-floating)] hover:translate-y-[1px] active:translate-y-[2px] active:shadow-none"
           >
-            {isOptimizing ? "最適化を計算中..." : "最高効率のルートを検索"}
+            {isOptimizing ? "最適化中..." : "最高効率のルートを検索"}
           </button>
 
           <div className="flex space-x-2 mt-3">
