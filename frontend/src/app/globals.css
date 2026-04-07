@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --color-uber-black: #000000;
+  --color-uber-white: #ffffff;
+  --color-hover-gray: #e2e2e2;
+  --color-hover-light: #f3f3f3;
+  --color-chip-gray: #efefef;
+  --color-body-gray: #4b4b4b;
+  --color-muted-gray: #afafaf;
+  
+  --shadow-uber-light: 0px 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-uber-medium: 0px 4px 16px rgba(0, 0, 0, 0.16);
+  --shadow-uber-floating: 0px 2px 8px rgba(0, 0, 0, 0.16);
+  
+  --radius-full: 999px;
+  
+  --font-display: var(--font-inter);
+  --font-body: var(--font-inter);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base resets and defaults matching Uber style */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: var(--color-uber-black);
+}
+
+p, span, label, input, button {
+  font-family: var(--font-body), sans-serif;
+}

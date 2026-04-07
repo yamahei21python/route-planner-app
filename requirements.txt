@@ -1,9 +1,0 @@
-streamlit
-pandas
-googlemaps
-pytz
-folium
-streamlit-folium
-qrcode
-Pillow
-PyGithub
