@@ -102,7 +102,7 @@ export default function LandingPage() {
              <div className="flex-1 flex relative">
                 {/* Sidebar Mock */}
                 <div className="w-1/3 bg-white border-r border-gray-100 p-4 hidden sm:flex flex-col shadow-[2px_0_12px_rgba(0,0,0,0.03)] z-10 relative">
-                  <div className="font-bold tracking-tight text-lg mb-0.5">Route Planner</div>
+                  <div className="font-bold tracking-tight text-lg mb-0.5">Best Route</div>
                   <div className="text-[9px] text-gray-400 mb-4 whitespace-nowrap overflow-hidden text-ellipsis">複数の訪問先を最も効率よく回る</div>
                   
                   <div className="space-y-1.5 mb-4 max-h-[160px] overflow-hidden">
@@ -205,7 +205,7 @@ export default function LandingPage() {
                   href="/planner"
                   className="inline-flex items-center text-black font-bold hover:gap-2 transition-all group"
                 >
-                  ルート作成アプリを開く
+                  Best Routeを開く
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1" />
                 </Link>
             </div>

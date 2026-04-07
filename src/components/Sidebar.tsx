@@ -43,7 +43,7 @@ export default function Sidebar({
       {/* Header */}
       <div className="px-6 pb-4 border-b border-gray-100">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tighter text-[var(--color-uber-black)]">Route Planner</h1>
+          <h1 className="text-3xl font-bold tracking-tighter text-[var(--color-uber-black)]">Best Route</h1>
           <button
             onClick={loadSampleData}
             className="text-[10px] font-bold bg-[var(--color-chip-gray)] px-2.5 py-1 rounded-full hover:bg-[var(--color-hover-gray)] transition-colors"
