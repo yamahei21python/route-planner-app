@@ -73,3 +73,21 @@ export interface OptimizeResponse {
   total_duration_min: number;
   optimized_waypoints: string[];
 }
+
+// Google Maps API Types
+export interface DirectionsLeg {
+  start_address: string;
+  end_address: string;
+  distance: { value: number; text: string };
+  duration: { value: number; text: string };
+}
+
+export interface DirectionsRoute {
+  legs: DirectionsLeg[];
+  waypoint_order: number[];
+}
+
+export interface DirectionsApiResponse {
+  status: string;
+  routes: DirectionsRoute[];
+}
