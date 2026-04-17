@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Best Route - 最短ルートを、1秒で。
 
-## Getting Started
+複数の目的地を最も効率よく回る順番を、一瞬で計算する最適経路提案アプリです。
 
-First, run the development server:
+## 🚀 特徴
+- **爆速の計算**: Vercel の高速なインフラを使用し、複雑な経路も「1秒」で最適化します。
+- **世界水準のアルゴリズム**: Google Maps Directions API を活用した、高精度な最適経路ロジック。
+- **洗練されたデザイン**: Uber のデザインシステムを参考に、機能性を追求したクリーンなミニマル UI。
+- **スマホへの即座な共有**: 作成したルートを QR コードで瞬時に共有可能。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🛠️ 技術スタック
+- **Frontend**: Next.js (App Router), Tailwind CSS, Framer Motion
+- **Database/Cache**: Vercel KV (Redis) - 利用制限管理
+- **API**: Google Maps Directions API, GitHub API (Auth)
+- **Deployment**: Vercel
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📖 使い方
+1. [best-route.vercel.app](https://best-route.vercel.app) にアクセス。
+2. 出発地、目的地を入力（ドラッグ＆ドロップで手動調整も可能）。
+3. 「ルート最適化」ボタンをクリック。
+4. QR コードを表示してスマホの Google マップへ連携。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔗 リンク
+- **本番環境**: [https://best-route.vercel.app](https://best-route.vercel.app)
+- **紹介ページ**: [https://best-route.vercel.app/lp](https://best-route.vercel.app/lp)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+© 2026 yamahei21python. All rights reserved.

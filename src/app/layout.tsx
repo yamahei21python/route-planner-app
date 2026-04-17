@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "最適経路提案アプリ | Route Planner",
-  description: "複数の目的地を効率的に回る最適経路を検索・表示するアプリケーションです。",
+  title: "Best Route | 最短ルートを、1秒で。",
+  description: "複数の訪問先を最も効率よく回る最適経路提案アプリ「Best Route」。旅行計画や営業の外回りルートを一瞬で最適化します。",
 };
 
 export default function RootLayout({
